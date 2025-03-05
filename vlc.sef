@@ -1,35 +1,136 @@
 [extension_name]
-TESTVLC
+VLC Sammi Extension
 [extension_info]
-Gets stuff from vlc maybe
+by Swolekat. Watch me on twitch at https://www.twitch.tv/swolekat
 [extension_version]
 0.0.1
 [insert_external]
 <div>
-    Hello world!
+    <h1>
+        VLC Sammi Plugin
+    </h1>
+    <p>
+        Hewwow, thank you for installing my plugin. I have instructions on the <a href="https://github.com/swolekat/vlc-sammi-extension">github</a> if you get lost.
+        If you want to be extra kawaii maybe say hi on <a href="https://www.twitch.tv/swolekat">stweam</a> UwU
+    </p>
 </div>
 [insert_command]
-// vlc thing
+SAMMI.extCommand('VLC Play', 3355443, 52, {});
+SAMMI.extCommand('VLC Pause', 3355443, 52, {});
+SAMMI.extCommand('VLC Toggle Pause', 3355443, 52, {});
+SAMMI.extCommand('VLC Stop', 3355443, 52, {});
+SAMMI.extCommand('VLC Next', 3355443, 52, {});
+SAMMI.extCommand('VLC Previous', 3355443, 52, {});
+SAMMI.extCommand('VLC Random', 3355443, 52, {});
+
+// vlc main
 vlcMain();
 [insert_hook]
-// vlc thing
+// vlc plugin has no hooks
 [insert_script]
 function vlcMain() {
-    const password = 'test';
-    const headers = {
-        "Authorization": `Basic ${btoa(`:${password}`)}`,
-        "Content-Type": "application/json"
+    const VARIABLE_BUTTON_ID = 'vlcVariables';
+    let headers;
+    let currentStatus;
+
+    const startPollLoop = () => {
+        setInterval(() => {
+            SAMMI.httpRequest("http://localhost:8080/requests/status.json", "GET", headers).then(response => {
+                const data = JSON.parse(response.Value);
+                const newStatus = JSON.parse(data.response);
+                // handle first loop
+                if(!currentStatus){
+                    currentStatus = newStatus;
+                    SAMMI.setVariable('time', newStatus.time, VARIABLE_BUTTON_ID)
+                    SAMMI.setVariable('title', title, VARIABLE_BUTTON_ID)
+                    SAMMI.setVariable('artist', artist, VARIABLE_BUTTON_ID)
+                    SAMMI.setVariable('filename', filename, VARIABLE_BUTTON_ID)
+                    SAMMI.setVariable('length', newStatus.length, VARIABLE_BUTTON_ID)
+                    SAMMI.setVariable('state', newStatus.state, VARIABLE_BUTTON_ID)
+                    return;
+                }
+                SAMMI.setVariable('time', newStatus.time, VARIABLE_BUTTON_ID)
+                if(JSON.stringify(newStatus?.information?.category?.meta) !== JSON.stringify(currentStatus?.information?.category?.meta)){
+                    const {artist, title, filename} = newStatus.information.category.meta;
+                    SAMMI.setVariable('title', title, VARIABLE_BUTTON_ID)
+                    SAMMI.setVariable('artist', artist, VARIABLE_BUTTON_ID)
+                    SAMMI.setVariable('filename', filename, VARIABLE_BUTTON_ID)
+                    SAMMI.setVariable('length', newStatus.length, VARIABLE_BUTTON_ID);
+                    SAMMI.triggerExt('VLC Song Changed', newStatus.information.category.meta);
+                }
+                if(currentStatus.state !== newStatus.state){
+                    SAMMI.setVariable('state', newStatus.state, VARIABLE_BUTTON_ID)
+                    SAMMI.triggerExt('VLC State Changed', {state: newStatus.state});
+                }
+                SAMMI.triggerExt('VLC Status Updated', {status: newStatus});
+                currentStatus = newStatus;
+            });
+        }, 1000);
+    };
+
+    const tryToGetPassword = () => {
+        SAMMI.getVariable('password', VARIABLE_BUTTON_ID).then((data) => {
+            if(!data?.Value){
+                SAMMI.alert('VLC Plugin: Could NOT get password from VLC Variables button. Please set it.');
+                setTimeout(tryToGetPassword, 30000);
+            }
+            const password = data.Value;
+            headers = {
+                "Authorization": `Basic ${btoa(`:${password}`)}`,
+                "Content-Type": "application/json"
+            };
+            SAMMI.alert('VLC Plugin: Connected.');
+            startPollLoop();
+        }).catch(() => {
+            SAMMI.alert('VLC Plugin: Could NOT get password from VLC Variables button. Please set it.');
+            setTimeout(tryToGetPassword, 30000);
+        });
     };
 
 
-    SAMMI.httpRequest("http://localhost:8080/requests/status.json", "GET", headers).then(response => {
-        const data = JSON.parse(response.Value);
-        const realData = JSON.parse(data.response);
-        const meta = realData.information.category.meta;
-        const {artist, title, filename} = meta;
-        console.log(artist);
-        console.log(title);
-        console.log(filename);
+    sammiclient.on('VLC Play', () => {
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
+            command: 'pl_forceresume'
+        })
     });
+
+    sammiclient.on('VLC Pause', () => {
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
+            command: 'pl_forcepause'
+        })
+    });
+
+    sammiclient.on('VLC Toggle Pause', () => {
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
+            command: 'pl_pause'
+        })
+    });
+
+    sammiclient.on('VLC Stop', () => {
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
+            command: 'pl_stop'
+        })
+    });
+
+    sammiclient.on('VLC Next', () => {
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
+            command: 'pl_next'
+        })
+    });
+
+    sammiclient.on('VLC Previous', () => {
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
+            command: 'pl_previous'
+        })
+    });
+
+    sammiclient.on('VLC Random', () => {
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
+            command: 'pl_random'
+        })
+    });
+
+    tryToGetPassword();
 }
 [insert_over]
+{ "deck_data": "{ \"background_color\": 4210752.0, \"on\": true, \"grid_y\": 5.0, \"snap_grid\": 1.0, \"lb_version\": \"2025.1.1\", \"background_image\": \"\", \"sammi_version\": \"2025.1.1\", \"adaptive_resizing\": 1.0, \"unique_id\": \"20250305154843296989970\", \"button_list\": [ { \"color\": 1929664.0, \"persistent\": 1.0, \"text\": \"VLC\\nVariables\", \"release_duration\": 0.0, \"queueable\": 0.0, \"command_list\": [ { \"b1\": \"=\", \"b3\": \"vlcVariables\", \"cmd\": 160.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": 0.0, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"password\", \"b2\": \"\\\"test\\\"\" }, { \"b1\": \"=\", \"b3\": \"vlcVariables\", \"cmd\": 160.0, \"obsid\": \"Main\", \"pos\": 1.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": 0.0, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"title\", \"b2\": \"\\\"\\\"\" }, { \"b1\": \"=\", \"b3\": \"vlcVariables\", \"cmd\": 160.0, \"obsid\": \"Main\", \"pos\": 2.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": 0.0, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"artist\", \"b2\": \"\\\"\\\"\" }, { \"b1\": \"=\", \"b3\": \"vlcVariables\", \"cmd\": 160.0, \"obsid\": \"Main\", \"pos\": 3.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": 0.0, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"filename\", \"b2\": \"\\\"\\\"\" }, { \"b1\": \"=\", \"b3\": \"vlcVariables\", \"cmd\": 160.0, \"obsid\": \"Main\", \"pos\": 4.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": 0.0, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"state\", \"b2\": \"\\\"\\\"\" }, { \"b1\": \"=\", \"b3\": \"vlcVariables\", \"cmd\": 160.0, \"obsid\": \"Main\", \"pos\": 5.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": 0.0, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"length\", \"b2\": \"0\" }, { \"b1\": \"=\", \"b3\": \"vlcVariables\", \"cmd\": 160.0, \"obsid\": \"Main\", \"pos\": 6.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": 0.0, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"time\", \"b2\": \"0\" } ], \"press_type\": 0.0, \"x\": 0.0, \"is_transparent\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ { \"group_id\": \"\", \"type\": \"SAMMI Startup\", \"button_id\": \"vlcVariables\", \"trg\": 10.0 } ], \"group_id\": \"\", \"overlappable\": 0.0, \"init_variable\": \"\", \"deck\": 2.0, \"width\": 0.40000000000000002220446049250313, \"button_id\": \"vlcVariables\", \"button_duration\": 0.0, \"y\": 0.0, \"switch_deck\": \"\", \"height\": 0.40000000000000002220446049250313, \"release_list\": [ ], \"functions\": 81.0, \"stretch\": 0.0 }, { \"color\": 12601765.0, \"persistent\": 1.0, \"text\": \"VLC\\nDEMO\\nSETUP\", \"release_duration\": 0.0, \"queueable\": 0.0, \"command_list\": [ { \"b1\": \"=\", \"cmd\": 15.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"wsPort\", \"b2\": \"4455\" }, { \"b1\": \"=\", \"cmd\": 15.0, \"obsid\": \"Main\", \"pos\": 1.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"wsPassword\", \"b2\": \"'yourWebsocketPasswordGoesHere'\" }, { \"cmd\": 50.0, \"obsid\": \"Main\", \"pos\": 2.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"VLC DEMO LOWER THIRD\" }, { \"b1\": \"{}\", \"cmd\": 34.0, \"obsid\": \"Main\", \"pos\": 3.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"test\" }, { \"b1\": \"text_gdiplus_v2\", \"b3\": \"{\\n  \\\"color\\\": 4278190080,\\n  \\\"text\\\": \\\"test\\\",\\n  \\\"bk_color\\\": 4294967295,\\n  \\\"bk_opacity\\\": 100\\n}\", \"cmd\": 47.0, \"obsid\": \"Main\", \"pos\": 4.0, \"vis\": 1.0, \"ms\": 1000.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 369.0, \"b0\": \"VLC DEMO TEXT\", \"b2\": \"VLC DEMO LOWER THIRD\", \"v0\": 0.0 }, { \"b1\": \"\", \"cmd\": 65.0, \"obsid\": \"Main\", \"pos\": 5.0, \"vis\": 1.0, \"ms\": 5000.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 238.0, \"b0\": \"{\\n  \\\"op\\\": 6,\\n  \\\"d\\\": {\\n    \\\"requestType\\\": \\\"CreateSourceFilter\\\",\\n    \\\"requestData\\\": {\\n        \\\"sourceName\\\": \\\"VLC DEMO LOWER THIRD\\\",\\n        \\\"filterName\\\": \\\"Color Correction\\\",\\n        \\\"filterKind\\\": \\\"color_filter_v2\\\",\\n        \\\"filterSettings\\\": {\\n          \\n        }\\n  }\\n}\\n}\", \"b2\": \"\" }, { \"b1\": \"VLC DEMO TEXT\", \"cmd\": 296.0, \"obsid\": \"Main\", \"pos\": 6.0, \"vis\": 1.0, \"ms\": 5000.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"VLC DEMO LOWER THIRD\" }, { \"cmd\": 142.0, \"obsid\": \"Main\", \"pos\": 7.0, \"vis\": 1.0, \"ms\": 10000.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"DONE!\" } ], \"press_type\": 0.0, \"x\": 0.0, \"is_transparent\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ ], \"group_id\": \"\", \"overlappable\": 0.0, \"init_variable\": \"\", \"deck\": 2.0, \"width\": 0.40000000000000002220446049250313, \"button_id\": \"vlcDemoCreateScenes\", \"button_duration\": 10000.0, \"y\": 0.59999999999999997779553950749687, \"switch_deck\": \"\", \"height\": 0.40000000000000002220446049250313, \"release_list\": [ ], \"functions\": 65.0, \"stretch\": 0.0 }, { \"color\": 12601765.0, \"persistent\": 1.0, \"text\": \"VLC\\nDEMO\", \"release_duration\": 0.0, \"queueable\": 0.0, \"command_list\": [ { \"b1\": \"title\", \"cmd\": 162.0, \"obsid\": \"Main\", \"pos\": 0.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"vlcVariables\", \"b2\": \"title\" }, { \"b1\": \"artist\", \"cmd\": 162.0, \"obsid\": \"Main\", \"pos\": 1.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"vlcVariables\", \"b2\": \"artist\" }, { \"b1\": \"\\\/$title$\\\/|\\\/$artist$\\\/\", \"cmd\": 35.0, \"obsid\": \"Main\", \"pos\": 2.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"VLC DEMO TEXT\" }, { \"b1\": \"Color Correction\", \"b3\": \"1\", \"cmd\": 40.0, \"obsid\": \"Main\", \"pos\": 3.0, \"vis\": 1.0, \"ms\": 0.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"VLC DEMO LOWER THIRD\", \"b4\": \"1000\", \"b2\": \"0\", \"v0\": 3.0 }, { \"b1\": \"Color Correction\", \"b3\": \"0\", \"cmd\": 40.0, \"obsid\": \"Main\", \"pos\": 4.0, \"vis\": 1.0, \"ms\": 5000.0, \"sel\": false, \"dis\": 0.0, \"xpan\": 0.0, \"b0\": \"VLC DEMO LOWER THIRD\", \"b4\": \"1000\", \"b2\": \"1\", \"v0\": 3.0 } ], \"press_type\": 0.0, \"x\": 0.40000000000000002220446049250313, \"is_transparent\": 0.0, \"border\": 2.0, \"image\": \"\", \"triggers\": [ { \"case_sensitive\": false, \"message\": \"VLC Song Changed\", \"group_id\": \"\", \"button_id\": \"vlcDemo\", \"trg\": 12.0, \"allow_empty_wildcard\": false } ], \"group_id\": \"\", \"overlappable\": 0.0, \"init_variable\": \"\", \"deck\": 2.0, \"width\": 0.40000000000000002220446049250313, \"button_id\": \"vlcDemo\", \"button_duration\": 5000.0, \"y\": 0.59999999999999997779553950749687, \"switch_deck\": \"\", \"height\": 0.40000000000000002220446049250313, \"release_list\": [ ], \"functions\": 81, \"stretch\": 0.0 } ], \"deck_name\": \"VLC Sammi Extension\", \"grid_x\": 5.0, \"stretch\": 0.0 }", "unique_id": "20250305154843296989970", "include_image": { } }
