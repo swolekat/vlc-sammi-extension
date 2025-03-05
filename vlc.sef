@@ -1,0 +1,35 @@
+[extension_name]
+TESTVLC
+[extension_info]
+Gets stuff from vlc maybe
+[extension_version]
+0.0.1
+[insert_external]
+<div>
+    Hello world!
+</div>
+[insert_command]
+// vlc thing
+vlcMain();
+[insert_hook]
+// vlc thing
+[insert_script]
+function vlcMain() {
+    const password = 'test';
+    const headers = {
+        "Authorization": `Basic ${btoa(`:${password}`)}`,
+        "Content-Type": "application/json"
+    };
+
+
+    SAMMI.httpRequest("http://localhost:8080/requests/status.json", "GET", headers).then(response => {
+        const data = JSON.parse(response.Value);
+        const realData = JSON.parse(data.response);
+        const meta = realData.information.category.meta;
+        const {artist, title, filename} = meta;
+        console.log(artist);
+        console.log(title);
+        console.log(filename);
+    });
+}
+[insert_over]

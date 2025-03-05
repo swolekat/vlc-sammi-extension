@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VLC Song Title</title>
+    <style>
+        body {background: #fff;}
+    </style>
+</head>
+<body>
+    <div id="song-title">
+        Loading
+    </div>
+    <script>
+        (function(){
+            const songTitleElement = document.getElementById('song-title');
+            let previousSongTitle = '';
+
+            const password = 'test';
+
+            const headers = {
+                "Authorization": `Basic ${btoa(`:${password}`)}`,
+            };
+
+            console.log(JSON.stringify(headers));
+
+
+            setTimeout(() => {
+                fetch('http://localhost:8080/requests/status.json',{
+                    // mode: 'no-cors',
+                    headers,
+                    method: 'GET',
+                })
+                    .then(async (response) => {
+                        const data = await response.json();
+                        songTitleElement.innerHTML = data;
+                    })
+                    .catch(error => console.error(error));
+            }, 0);
+        }());
+        // http://localhost:8080/requests/status.xml
+    </script>
+</body>
+</html>
