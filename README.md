@@ -56,7 +56,9 @@ I've tried to cover the basic commands. If you'd like to see more please contact
 * `VLC Stop`
 * `VLC Next`
 * `VLC Previous`
-* `VLC Random`
+* `VLC Toggle Random`
+* `VLC Toggle Loop` Loops the entire playlist
+* `VLC Toggle Repeat` Repeats just the current song 
 
 ## Lower Third Demo
 To show off what you can do, I've included a "Lower Third" like widget. This will show the new song title whenever one comes on.

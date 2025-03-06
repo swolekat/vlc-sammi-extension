@@ -3,12 +3,15 @@ VLC Sammi Extension
 [extension_info]
 by Swolekat. Watch me on twitch at https://www.twitch.tv/swolekat
 [extension_version]
-0.0.1
+0.0.2
 [insert_external]
 <div>
     <h1>
         VLC Sammi Plugin
     </h1>
+    <h2>
+        Version 0.0.2
+    </h2>
     <p>
         Hewwow, thank you for installing my plugin. I have instructions on the <a href="https://github.com/swolekat/vlc-sammi-extension">github</a> if you get lost.
         If you want to be extra kawaii maybe say hi on <a href="https://www.twitch.tv/swolekat">stweam</a> UwU
@@ -21,7 +24,9 @@ SAMMI.extCommand('VLC Toggle Pause', 3355443, 52, {});
 SAMMI.extCommand('VLC Stop', 3355443, 52, {});
 SAMMI.extCommand('VLC Next', 3355443, 52, {});
 SAMMI.extCommand('VLC Previous', 3355443, 52, {});
-SAMMI.extCommand('VLC Random', 3355443, 52, {});
+SAMMI.extCommand('VLC Toggle Random', 3355443, 52, {});
+SAMMI.extCommand('VLC Toggle Loop', 3355443, 52, {});
+SAMMI.extCommand('VLC Toggle Repeat', 3355443, 52, {});
 
 // vlc main
 vlcMain();
@@ -89,45 +94,40 @@ function vlcMain() {
 
 
     sammiclient.on('VLC Play', () => {
-        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
-            command: 'pl_forceresume'
-        })
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json?command=pl_forceresume", "GET", headers)
     });
 
     sammiclient.on('VLC Pause', () => {
-        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
-            command: 'pl_forcepause'
-        })
+
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json?command=pl_forcepause", "GET", headers)
     });
 
     sammiclient.on('VLC Toggle Pause', () => {
-        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
-            command: 'pl_pause'
-        })
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json?command=pl_pause", "GET", headers);
     });
 
     sammiclient.on('VLC Stop', () => {
-        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
-            command: 'pl_stop'
-        })
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json?command=pl_stop", "GET", headers)
     });
 
     sammiclient.on('VLC Next', () => {
-        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
-            command: 'pl_next'
-        })
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json?command=pl_next", "GET", headers)
     });
 
     sammiclient.on('VLC Previous', () => {
-        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
-            command: 'pl_previous'
-        })
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json?command=pl_previous", "GET", headers)
     });
 
-    sammiclient.on('VLC Random', () => {
-        SAMMI.httpRequest("http://localhost:8080/requests/status.json", "POST", headers, {
-            command: 'pl_random'
-        })
+    sammiclient.on('VLC Toggle Random', () => {
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json?command=pl_random", "GET", headers)
+    });
+
+    sammiclient.on('VLC Toogle Loop', () => {
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json?command=pl_loop", "GET", headers)
+    });
+
+    sammiclient.on('VLC Toggle Repeat', () => {
+        SAMMI.httpRequest("http://localhost:8080/requests/status.json?command=pl_random", "GET", headers)
     });
 
     tryToGetPassword();
