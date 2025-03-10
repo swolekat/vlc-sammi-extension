@@ -3,14 +3,14 @@ VLC Sammi Extension
 [extension_info]
 by Swolekat. Watch me on twitch at https://www.twitch.tv/swolekat
 [extension_version]
-0.0.5
+0.0.4
 [insert_external]
 <div>
     <h1>
         VLC Sammi Plugin
     </h1>
     <h2>
-        Version 0.0.5
+        Version 0.0.4
     </h2>
     <p>
         Hewwow, thank you for installing my plugin. I have instructions on the <a href="https://github.com/swolekat/vlc-sammi-extension">github</a> if you get lost.
