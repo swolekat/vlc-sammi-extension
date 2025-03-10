@@ -94,5 +94,10 @@ function vlcMain() {
         SAMMI.httpRequest("http://localhost:8080/requests/status.json?command=pl_random", "GET", headers)
     });
 
+    sammiclient.on('VLC Play File', (payload) => {
+        const filePath = payload?.Data?.filePath;
+        SAMMI.httpRequest(`http://localhost:8080/requests/status.json?command=in_play&input=${encodeURIComponent(filePath)}`, "GET", headers)
+    });
+
     tryToGetPassword();
 }
