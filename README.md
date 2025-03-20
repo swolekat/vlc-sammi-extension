@@ -51,6 +51,7 @@ There are several triggers you can use for when vlc changes
 ## Commands 
 I've tried to cover the basic commands. If you'd like to see more please contact me.
 * `VLC Play`
+* `VLC Play File`
 * `VLC Pause`
 * `VLC Toggle Pause`
 * `VLC Stop`
